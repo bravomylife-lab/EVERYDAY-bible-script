@@ -1,6 +1,6 @@
 # 하루 딱! 한 장 - QT 대본 & 이미지 프롬프트 생성기
 
-📖 **QT Script & Image Prompt Generator**
+📖 **EVERYDAY Bible Script - QT Script & Image Prompt Generator**
 
 매일 성경 한 장을 묵상하는 QT(Quiet Time) 콘텐츠 제작을 위한 React 웹 애플리케이션입니다.
 
@@ -11,6 +11,7 @@
 - 10분 분량의 아침 명상용 대본 자동 생성
 - Claude AI + 웹 검색을 통한 정확한 성경 본문 참조
 - 성경 구절 인용 (25%) + 배경 설명/해석 (45%) + 적용 (30%) 밸런스
+- 정중한 말투 (~습니다/~겠습니다 체)
 
 ### 2. 이미지 프롬프트 생성
 - 20장의 종이 공예(Paper Art) 스타일 이미지 프롬프트
@@ -23,15 +24,16 @@
 - **Frontend:** React + Tailwind CSS
 - **AI:** Claude API (claude-sonnet-4-20250514)
 - **Tools:** Web Search Integration
+- **Build:** Vite
 
 ## 📦 설치 방법
 
 ```bash
 # 저장소 클론
-git clone https://github.com/YOUR_USERNAME/qt-script-generator.git
+git clone https://github.com/bravomylife-lab/EVERYDAY-bible-script.git
 
 # 디렉토리 이동
-cd qt-script-generator
+cd EVERYDAY-bible-script
 
 # 의존성 설치
 npm install
@@ -67,6 +69,7 @@ npm run dev
 - **스타일:** Layered paper craft, clean flat design
 - **분위기:** 밝고 따뜻한 아침의 고요함
 - **상징물:** 왕관, 두루마리, 성전, 촛대, 방패, 비둘기 등
+- **비율:** 16:9 (필수)
 
 ## 📺 연결 채널
 

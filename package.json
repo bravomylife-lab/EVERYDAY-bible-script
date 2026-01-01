@@ -1,5 +1,5 @@
 {
-  "name": "qt-script-generator",
+  "name": "everyday-bible-script",
   "version": "1.0.0",
   "description": "하루 딱! 한 장 - QT 대본 & 이미지 프롬프트 생성기",
   "type": "module",
