@@ -456,6 +456,16 @@ ${selectedBook.name} ${selectedChapter}장
               </React.Fragment>
             ))}
           </div>
+
+          {/* 새로운 장 시작하기 버튼 - Step 1이 아닐 때만 표시 */}
+          {step > 1 && (
+            <button
+              onClick={resetAll}
+              className="ml-4 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl text-sm font-bold transition-all flex items-center gap-2 backdrop-blur-sm border border-white/20"
+            >
+              🔄 새로운 장
+            </button>
+          )}
         </div>
       </div>
 
