@@ -138,6 +138,32 @@ export default function App() {
     setLoadingMessage('대본을 생성 중입니다...');
     setError('');
 
+    // 다양한 인트로 스타일
+    const introStyles = [
+      "포근한 아침 햇살처럼 따뜻한 인사로 시작",
+      "잔잔한 호수처럼 평화로운 분위기로 시작",
+      "새로운 하루를 맞이하는 설렘으로 시작",
+      "고요한 새벽 기도의 마음으로 시작",
+      "봄날의 산들바람처럼 상쾌하게 시작",
+      "감사의 마음을 담아 따뜻하게 시작",
+      "하나님의 사랑을 느끼며 편안하게 시작"
+    ];
+    
+    // 다양한 클로징 스타일
+    const closingStyles = [
+      "오늘 하루도 당신의 인생이 하나님의 은혜 가운데 빛나시길 바랍니다.",
+      "오늘도 하나님의 말씀이 당신의 발걸음을 인도하시길 기도합니다.",
+      "이 말씀이 오늘 하루 당신에게 힘과 위로가 되시길 바랍니다.",
+      "하나님의 평강이 당신의 하루를 감싸주시길 기도합니다.",
+      "오늘 하루도 주님의 은혜 안에서 승리하는 하루 되시길 바랍니다.",
+      "이 말씀을 품고 가시는 오늘이 축복으로 가득하길 기도합니다.",
+      "하나님께서 당신의 모든 길에 함께 하시길 바랍니다.",
+      "오늘 만난 말씀이 당신의 삶에 새로운 소망이 되시길 바랍니다."
+    ];
+    
+    const randomIntro = introStyles[Math.floor(Math.random() * introStyles.length)];
+    const randomClosing = closingStyles[Math.floor(Math.random() * closingStyles.length)];
+
     const prompt = `당신은 전문 기독교 QT(Quiet Time) 대본 작가입니다.
 
 **목표:**
@@ -146,41 +172,44 @@ export default function App() {
 **대본 요구사항:**
 
 1. **톤 & 스타일:**
-   - 아침에 어울리는 부드럽고 따뜻한 어조
    - 명상적이고 평화로운 분위기
    - 청취자에게 직접 말하듯 친근하면서도 정중한 느낌
    - **말투:** "~습니다/~겠습니다" 체로 정중하게
 
-2. **구절 배치 (매우 중요!):**
+2. **오프닝 스타일 (이번 회차):**
+   - ${randomIntro}
+   - "새벽", "아침"이라는 단어 없이도 따뜻한 시작 가능
+   - 다양하고 신선한 인사로 시작해주세요
+
+3. **구절 배치 (매우 중요!):**
    성경 구절을 초반에 몰아서 읽지 마세요!
    - 핵심 구절 3개를 선정하되, 대본 전체에 걸쳐 분산 배치하세요
    - 패턴: [구절1 → 설명/해석] → [구절2 → 설명/해석] → [구절3 → 적용]
    - 각 구절을 읽은 직후에 바로 그 구절에 대한 깊은 설명과 해석을 제공
-   - 이렇게 하면 청취자가 구절의 의미를 더 깊이 이해하고 감동받을 수 있습니다
 
-3. **구조:**
-   - **오프닝 (1분):** 아침 인사 & 오늘의 본문 소개
-   - **구절1 + 배경설명 (2.5분):** 첫 번째 핵심 구절 읽기 → 역사적/문화적 배경 설명
-   - **구절2 + 의미해석 (2.5분):** 두 번째 핵심 구절 읽기 → 영적 의미와 뜻풀이
-   - **구절3 + 삶의적용 (2.5분):** 세 번째 핵심 구절 읽기 → 오늘 삶에 적용하는 방법
+4. **구조:**
+   - **오프닝 (1분):** 인사 & 오늘의 본문 소개
+   - **구절1 + 배경설명 (2.5분):** 첫 번째 핵심 구절 → 역사적/문화적 배경
+   - **구절2 + 의미해석 (2.5분):** 두 번째 핵심 구절 → 영적 의미와 뜻풀이
+   - **구절3 + 삶의적용 (2.5분):** 세 번째 핵심 구절 → 오늘 삶에 적용
    - **기도 (1분):** 함께 드리는 기도
-   - **클로징 (0.5분):** 희망찬 마무리 인사
+   - **클로징 (0.5분):** 마무리 인사
 
-4. **구절 인용 방식:**
-   - 구절을 인용할 때 반드시 **몇 절인지 먼저 언급**한 후 내용을 읽어주세요
+5. **구절 인용 방식:**
+   - 구절을 인용할 때 반드시 **몇 절인지 먼저 언급**
    - 예시: "5절 말씀입니다. '여호와께서...(구절 내용)'"
 
-5. **기도 시간 형식:**
+6. **기도 시간:**
    "하나님 아버지, 감사합니다. 
    오늘 ${selectedBook.name} ${selectedChapter}장 말씀을 통해 [핵심 깨달음]을 배웠습니다.
    [구체적인 기도 내용]
    예수님의 이름으로 기도드립니다. 아멘."
 
-6. **클로징 형식:**
-   - "오늘 하루도 당신의 인생이 하나님의 은혜 가운데 빛나시길 바랍니다."
-   - "내일 또 말씀으로 뵙겠습니다." (이 문장으로 항상 마무리)
+7. **클로징 (이번 회차):**
+   - "${randomClosing}"
+   - 그 다음 "내일 또 말씀으로 뵙겠습니다."로 마무리
 
-7. **기술적 요구사항:**
+8. **기술적 요구사항:**
    - 총 분량: 약 1,300~1,500 단어 (10분 낭독 기준)
    - 섹션 마커 넣지 마세요. 순수 대본만 작성해주세요.
 
@@ -1168,8 +1197,6 @@ ${hashtags}`;
 
 // 하이라이트된 대본 컴포넌트
 function HighlightedScript({ script, prompts, onDeletePrompt }) {
-  const [hoveredNum, setHoveredNum] = useState(null);
-  
   const getMarkedScript = () => {
     const parts = [];
     let lastIndex = 0;
@@ -1220,29 +1247,29 @@ function HighlightedScript({ script, prompts, onDeletePrompt }) {
   
   const parts = getMarkedScript();
   
+  const handleDelete = (e, number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (window.confirm(`#${number} 프롬프트를 삭제하시겠습니까?`)) {
+      onDeletePrompt(number);
+    }
+  };
+  
   return (
-    <div>
+    <div className="leading-6">
       {parts.map((part, idx) => (
         part.type === 'highlight' ? (
-          <span 
-            key={idx}
-            className="relative inline bg-pink-500/30 border-b-2 border-pink-400 px-0.5 rounded cursor-pointer hover:bg-pink-500/50 group"
-            onMouseEnter={() => setHoveredNum(part.number)}
-            onMouseLeave={() => setHoveredNum(null)}
-          >
+          <span key={idx} className="inline">
             <span 
-              className="absolute -top-5 left-0 bg-pink-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded cursor-pointer hover:bg-red-500 z-10"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (window.confirm(`#${part.number} 프롬프트를 삭제하시겠습니까?`)) {
-                  onDeletePrompt(part.number);
-                }
-              }}
+              className="inline-flex items-center bg-pink-500 text-white text-[9px] font-bold px-1 py-0.5 rounded cursor-pointer hover:bg-red-600 mx-0.5 select-none"
+              onClick={(e) => handleDelete(e, part.number)}
               title="클릭하여 삭제"
             >
-              #{part.number} ✕
+              #{part.number}✕
             </span>
-            {part.content}
+            <span className="bg-pink-500/20 border-b border-pink-400 px-0.5">
+              {part.content}
+            </span>
           </span>
         ) : (
           <span key={idx}>{part.content}</span>
