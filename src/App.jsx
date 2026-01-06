@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 export default function App() {
   // 구약 성경
@@ -76,11 +76,12 @@ export default function App() {
   ];
 
   const [step, setStep] = useState(1);
-  const [testamentTab, setTestamentTab] = useState('old'); // 'old' or 'new'
+  const [testamentTab, setTestamentTab] = useState('old');
   const [selectedBook, setSelectedBook] = useState(null);
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [additionalNotes, setAdditionalNotes] = useState('');
   const [script, setScript] = useState('');
+  const [scriptGenerated, setScriptGenerated] = useState(false);
   const [imagePrompts, setImagePrompts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
@@ -91,6 +92,16 @@ export default function App() {
   const [selectedPrompt, setSelectedPrompt] = useState(null);
   const [editInstruction, setEditInstruction] = useState('');
   const [editLoading, setEditLoading] = useState(false);
+  
+  // 드래그 선택 관련
+  const [selectedText, setSelectedText] = useState('');
+  const [deletedNumbers, setDeletedNumbers] = useState([]);
+  const scriptRef = useRef(null);
+  
+  // Step 5: 유튜브 관련
+  const [youtubeTitles, setYoutubeTitles] = useState([]);
+  const [selectedTitle, setSelectedTitle] = useState('');
+  const [youtubeData, setYoutubeData] = useState(null);
 
   const handleBookSelect = (book) => {
     setSelectedBook(book);
@@ -202,6 +213,7 @@ ${additionalNotes ? `**추가 참고 자료:**\n${additionalNotes}` : ''}
       }
 
       setScript(scriptText.trim());
+      setScriptGenerated(true);
       setLoading(false);
     } catch (error) {
       console.error('Error:', error);
@@ -224,20 +236,43 @@ ${additionalNotes ? `**추가 참고 자료:**\n${additionalNotes}` : ''}
 **목표:**
 아래 QT 대본을 바탕으로 20장의 이미지 프롬프트를 생성해주세요.
 
-**가장 중요한 규칙 - 대본 순서 엄격히 따르기:**
-대본을 처음부터 끝까지 읽으면서, 각 문단/섹션에 해당하는 이미지를 순서대로 만드세요.
-각 프롬프트에 대본의 어느 부분(핵심 문장)을 시각화했는지 명시해주세요.
+**⚠️ 최우선 규칙 - 순서 & 분포:**
+1. 반드시 #1부터 #20까지 순서대로 출력하세요
+2. 대본의 처음부터 끝까지 골고루 분포시키세요 - 특정 구간에 몰리거나 2문단 이상 빈 구간이 없도록!
+3. 대본을 20등분하여 각 구간에서 1개씩 핵심 장면을 선택하세요
+4. 출력: #1 → #2 → #3 → ... → #20 (순서 철저히!)
 
-**출력 형식 (반드시 따르세요):**
+**필수 이미지 구성:**
+- #1 (인트로): 반드시 한글 텍스트 "${selectedBook.name} ${selectedChapter}장" 포함! 아침 햇살, 성경책, 평화로운 시작
+- #2-4: 오프닝 + 첫 번째 구절 장면
+- #5-8: 배경설명 + 두 번째 구절 장면 (역사적/문화적 맥락)
+- #9-12: 의미해석 장면 (영적 깨달음, 상징적 표현)
+- #13-16: 삶의적용 장면 (현대 생활 적용, 실천 모습)
+- #17-18: 기도 장면 (경건한 분위기, 손 모은 모습)
+- #19: 희망찬 전환 (빛, 새로운 시작)
+- #20 (클로징): 반드시 한글 텍스트로 오늘의 핵심 교훈/격려 메시지 포함! "오늘도 승리하세요" 또는 본문의 핵심 가르침
+
+**한글 텍스트 이미지 (7장 - 35%):**
+- #1: "${selectedBook.name} ${selectedChapter}장" (인트로)
+- #5: 첫 번째 핵심 구절에서 가장 중요한 단어/문구
+- #9: 두 번째 핵심 구절에서 가장 중요한 단어/문구  
+- #12: 세 번째 핵심 구절에서 가장 중요한 단어/문구
+- #15: 적용 포인트 핵심 문구
+- #18: 기도의 핵심 (예: "감사합니다", "인도해 주세요")
+- #20: 클로징 격려 메시지 (예: "오늘도 말씀과 함께", "승리하는 하루")
+
+**출력 형식:**
 #1:
-- 대본 위치: "대본에서 해당하는 핵심 문장이나 구절을 그대로 인용"
-- 영문 프롬프트: Bright layered paper craft illustration of...
+- 대본 위치: "대본에서 해당 부분 인용"
+- 영문 프롬프트: Clean paper craft style with Korean text "${selectedBook.name} ${selectedChapter}장" in elegant font...
 - 한글 설명: 이 이미지는 ~를 표현합니다
 
 #2:
-- 대본 위치: "대본에서 해당하는 핵심 문장"
-- 영문 프롬프트: ...
+- 대본 위치: "해당 문장"
+- 영문 프롬프트: Bright layered paper craft illustration of...
 - 한글 설명: ...
+
+(#3부터 #20까지 순서대로, 빠짐없이)
 
 **스타일:**
 - 밝고 따뜻한 색상: warm cream, soft yellow, dusty rose, terracotta, sage green
@@ -245,26 +280,13 @@ ${additionalNotes ? `**추가 참고 자료:**\n${additionalNotes}` : ''}
 - 밝은 배경 (cream, ivory, light beige)
 - 16:9 aspect ratio 필수
 
-**한글 텍스트 vs 순수 이미지:**
-- 35% (7장): 한글 텍스트 포함 - #1, #5, #9, #12, #15, #18, #20
-- 65% (13장): 순수 이미지만
-
-**20장 구성:**
-- #1-2: 오프닝
-- #3-6: 첫 번째 구절 + 배경설명
-- #7-10: 두 번째 구절 + 의미해석
-- #11-14: 세 번째 구절 + 삶의적용
-- #15-17: 종합 정리
-- #18-19: 기도
-- #20: 클로징
-
 **대본:**
 ${script}
 
 **본문:**
 ${selectedBook.name} ${selectedChapter}장
 
-이제 20개의 이미지 프롬프트를 위 형식대로 생성해주세요.`;
+#1부터 #20까지 대본 전체에 골고루 분포되도록, 순서대로 생성해주세요.`;
 
     try {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -272,7 +294,7 @@ ${selectedBook.name} ${selectedChapter}장
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 10000,
+          max_tokens: 12000,
           messages: [{ role: 'user', content: prompt }]
         })
       });
@@ -308,13 +330,95 @@ ${selectedBook.name} ${selectedChapter}장
 
       if (parsedPrompts.length === 0) throw new Error('프롬프트 파싱 실패');
 
+      // 번호 기준 정렬
+      parsedPrompts.sort((a, b) => parseInt(a.number) - parseInt(b.number));
+
       setImagePrompts(parsedPrompts);
+      setDeletedNumbers([]);
       setLoading(false);
     } catch (error) {
       console.error('Error:', error);
       setError('이미지 프롬프트 생성 중 오류: ' + error.message);
       setLoading(false);
     }
+  };
+
+  // 프롬프트 삭제
+  const deletePrompt = (number) => {
+    setImagePrompts(prev => prev.filter(p => p.number !== number));
+    setDeletedNumbers(prev => [...prev, number].sort((a, b) => parseInt(a) - parseInt(b)));
+  };
+
+  // 선택된 텍스트로 새 프롬프트 생성
+  const handleTextSelection = () => {
+    const selection = window.getSelection();
+    const text = selection.toString().trim();
+    if (text.length > 10) {
+      setSelectedText(text);
+    }
+  };
+
+  // 삭제된 번호에 새 프롬프트 생성
+  const generateNewPrompt = async (number) => {
+    if (!selectedText) return;
+    
+    setEditLoading(true);
+    
+    const prompt = `다음 대본 내용을 바탕으로 이미지 프롬프트를 생성해주세요.
+
+**선택된 대본:**
+"${selectedText}"
+
+**본문:**
+${selectedBook.name} ${selectedChapter}장
+
+**스타일:**
+- 밝고 따뜻한 종이 공예 스타일
+- warm cream, soft yellow, dusty rose 색상
+- 16:9 aspect ratio
+
+**출력 형식:**
+- 영문 프롬프트: Bright layered paper craft illustration of...
+- 한글 설명: 이 이미지는 ~를 표현합니다`;
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      const data = await response.json();
+      const text = data.content[0]?.text || '';
+      
+      const engMatch = text.match(/영문 프롬프트:\s*([^\n]+(?:\n(?!-)[^\n]+)*)/);
+      const korMatch = text.match(/한글 설명:\s*([^\n]+)/);
+      
+      if (engMatch) {
+        const newPrompt = {
+          number,
+          scriptRef: selectedText.substring(0, 50),
+          prompt: engMatch[1].trim(),
+          koreanDesc: korMatch ? korMatch[1].trim() : ''
+        };
+        
+        setImagePrompts(prev => {
+          const updated = [...prev, newPrompt];
+          return updated.sort((a, b) => parseInt(a.number) - parseInt(b.number));
+        });
+        
+        setDeletedNumbers(prev => prev.filter(n => n !== number));
+        setSelectedText('');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+    
+    setEditLoading(false);
   };
 
   // 개별 프롬프트 수정
@@ -324,12 +428,11 @@ ${selectedBook.name} ${selectedChapter}장
     setEditLoading(true);
     const currentPrompt = imagePrompts[index];
     
-    const prompt = `현재 이미지 프롬프트를 수정해주세요.
+    const promptText = `현재 이미지 프롬프트를 수정해주세요.
 
 **현재 프롬프트:**
 - 영문: ${currentPrompt.prompt}
 - 한글 설명: ${currentPrompt.koreanDesc}
-- 대본 위치: ${currentPrompt.scriptRef}
 
 **수정 요청:**
 ${editInstruction}
@@ -337,7 +440,6 @@ ${editInstruction}
 **스타일 유지:**
 - 밝고 따뜻한 종이 공예 스타일
 - 16:9 aspect ratio
-- warm cream, soft yellow, dusty rose 색상
 
 **출력 형식:**
 - 영문 프롬프트: (수정된 영문 프롬프트)
@@ -350,7 +452,7 @@ ${editInstruction}
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 1000,
-          messages: [{ role: 'user', content: prompt }]
+          messages: [{ role: 'user', content: promptText }]
         })
       });
 
@@ -377,49 +479,176 @@ ${editInstruction}
     setEditLoading(false);
   };
 
+  // 이미지 프롬프트 확정 → 유튜브 단계
+  const confirmImagePrompts = async () => {
+    setLoading(true);
+    setLoadingMessage('유튜브 정보를 생성 중입니다...');
+    
+    const prompt = `다음 성경 QT 콘텐츠에 대한 유튜브 업로드 정보를 생성해주세요.
+
+**본문:** ${selectedBook.name} ${selectedChapter}장
+
+**대본 요약:**
+${script.substring(0, 1000)}...
+
+**요청:**
+1. 유튜브 제목 5개를 생성해주세요 (클릭하고 싶은 매력적인 제목)
+   - 본문의 핵심 메시지를 담아주세요
+   - 15-30자 내외로 간결하게
+
+**출력 형식:**
+제목1: [제목]
+제목2: [제목]
+제목3: [제목]
+제목4: [제목]
+제목5: [제목]`;
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      const data = await response.json();
+      const text = data.content[0]?.text || '';
+      
+      const titles = [];
+      const lines = text.split('\n');
+      for (const line of lines) {
+        const match = line.match(/제목\d+:\s*(.+)/);
+        if (match) {
+          titles.push(match[1].trim());
+        }
+      }
+      
+      setYoutubeTitles(titles.length > 0 ? titles : ['제목을 다시 생성해주세요']);
+      setStep(5);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error:', error);
+      setError('유튜브 정보 생성 중 오류: ' + error.message);
+      setLoading(false);
+    }
+  };
+
+  // 제목 선택 후 전체 유튜브 데이터 생성
+  const selectTitle = async (title) => {
+    setSelectedTitle(title);
+    setLoading(true);
+    setLoadingMessage('업로드 정보를 완성 중입니다...');
+    
+    const koreanBookName = selectedBook.name;
+    const chapter = selectedChapter;
+    
+    // 해시태그 생성
+    const titleHashtags = `#${koreanBookName}${chapter}장 #성경 #말씀묵상`;
+    const fullTitle = `${title} ${titleHashtags}`;
+    
+    const prompt = `다음 유튜브 영상의 설명글과 태그를 생성해주세요.
+
+**제목:** ${title}
+**본문:** ${koreanBookName} ${chapter}장
+
+**대본:**
+${script.substring(0, 1500)}
+
+**요청:**
+1. 설명글 (3-4문장으로 영상 내용 요약)
+2. 설명 하단 해시태그 (5-7개)
+3. 쉼표로 구분된 태그 (10-15개)
+
+**출력 형식:**
+설명글: [설명글 내용]
+해시태그: #태그1 #태그2 #태그3 ...
+태그: 태그1, 태그2, 태그3, ...`;
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      const data = await response.json();
+      const text = data.content[0]?.text || '';
+      
+      const descMatch = text.match(/설명글:\s*([^\n]+(?:\n(?!해시태그:|태그:)[^\n]+)*)/);
+      const hashMatch = text.match(/해시태그:\s*([^\n]+)/);
+      const tagMatch = text.match(/태그:\s*([^\n]+)/);
+      
+      const description = descMatch ? descMatch[1].trim() : '';
+      const hashtags = hashMatch ? hashMatch[1].trim() : '';
+      const tags = tagMatch ? tagMatch[1].trim() : '';
+      
+      // 기본 채널 설명
+      const channelDesc = `
+📖 하루 딱! 한 장
+매일 아침, 성경 한 장과 함께 시작하는 은혜로운 묵상 시간
+
+🔔 구독과 좋아요는 큰 힘이 됩니다!
+`;
+      
+      const fullDescription = `📖 ${koreanBookName} ${chapter}장 - ${title}
+
+${description}
+
+${channelDesc}
+
+${hashtags}`;
+
+      setYoutubeData({
+        title: fullTitle,
+        description: fullDescription,
+        hashtags: hashtags,
+        tags: tags
+      });
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Error:', error);
+      setError('업로드 정보 생성 중 오류: ' + error.message);
+      setLoading(false);
+    }
+  };
+
   const resetAll = () => {
     setStep(1);
     setSelectedBook(null);
     setSelectedChapter(null);
     setAdditionalNotes('');
     setScript('');
+    setScriptGenerated(false);
     setImagePrompts([]);
     setError('');
     setSelectedPrompt(null);
-  };
-
-  // 대본에서 해당 텍스트 하이라이트
-  const getHighlightedScript = () => {
-    if (imagePrompts.length === 0) return script;
-    
-    let highlightedScript = script;
-    const markers = [];
-    
-    imagePrompts.forEach((p, idx) => {
-      if (p.scriptRef && p.scriptRef.length > 10) {
-        const searchText = p.scriptRef.substring(0, 30);
-        const position = script.indexOf(searchText);
-        if (position !== -1) {
-          markers.push({ position, number: p.number, length: searchText.length });
-        }
-      }
-    });
-    
-    return { script, markers };
+    setDeletedNumbers([]);
+    setSelectedText('');
+    setYoutubeTitles([]);
+    setSelectedTitle('');
+    setYoutubeData(null);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {/* Header */}
-      <div className="w-full bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 py-4 px-6 shadow-2xl">
+      <div className="w-full bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 py-3 px-4 shadow-2xl">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-xl">
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-lg">
               📖
             </div>
             <div>
-              <h1 className="text-lg font-black text-white">하루 딱! 한 장</h1>
-              <p className="text-purple-200 text-xs">QT 대본 & 이미지 프롬프트</p>
+              <h1 className="text-base font-black text-white">하루 딱! 한 장</h1>
+              <p className="text-purple-200 text-[10px]">QT 대본 & 이미지 & 유튜브</p>
             </div>
           </div>
 
@@ -429,21 +658,22 @@ ${editInstruction}
               { num: 1, label: '성경' },
               { num: 2, label: '장' },
               { num: 3, label: '대본' },
-              { num: 4, label: '이미지' }
+              { num: 4, label: '이미지' },
+              { num: 5, label: '업로드' }
             ].map((s, i) => (
               <React.Fragment key={s.num}>
-                <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
+                <div className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold ${
                   step >= s.num ? 'bg-white text-purple-600' : 'bg-white/20 text-white/60'
                 }`}>
                   {step > s.num ? '✓' : s.num}
                 </div>
-                {i < 3 && <div className={`w-4 h-0.5 ${step > s.num ? 'bg-white' : 'bg-white/20'}`} />}
+                {i < 4 && <div className={`w-3 h-0.5 ${step > s.num ? 'bg-white' : 'bg-white/20'}`} />}
               </React.Fragment>
             ))}
           </div>
 
           {step > 1 && (
-            <button onClick={resetAll} className="px-3 py-1.5 bg-white/20 text-white rounded-lg text-sm font-bold">
+            <button onClick={resetAll} className="px-2 py-1 bg-white/20 text-white rounded-lg text-xs font-bold">
               🔄 새로운 장
             </button>
           )}
@@ -451,52 +681,50 @@ ${editInstruction}
       </div>
 
       {/* Main Content */}
-      <div className="p-4">
+      <div className="p-3">
         {error && (
-          <div className="max-w-4xl mx-auto mb-4 p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300">
+          <div className="max-w-6xl mx-auto mb-3 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-sm">
             {error}
           </div>
         )}
 
-        {/* Step 1: 성경 선택 (구약/신약 탭) */}
+        {/* Step 1: 성경 선택 */}
         {step === 1 && (
-          <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl p-6 border border-white/20">
-            <h2 className="text-2xl font-black text-white mb-4">📚 성경 선택</h2>
+          <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl p-5 border border-white/20">
+            <h2 className="text-xl font-black text-white mb-4">📚 성경 선택</h2>
             
-            {/* 구약/신약 탭 */}
-            <div className="flex gap-2 mb-6">
+            <div className="flex gap-2 mb-5">
               <button
                 onClick={() => setTestamentTab('old')}
-                className={`flex-1 py-3 rounded-xl font-bold text-lg transition-all ${
+                className={`flex-1 py-2.5 rounded-xl font-bold transition-all ${
                   testamentTab === 'old'
                     ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white'
                     : 'bg-white/10 text-white/60 hover:bg-white/20'
                 }`}
               >
-                📜 구약성경 <span className="text-sm opacity-80">(39권)</span>
+                📜 구약성경 <span className="text-xs opacity-80">(39권)</span>
               </button>
               <button
                 onClick={() => setTestamentTab('new')}
-                className={`flex-1 py-3 rounded-xl font-bold text-lg transition-all ${
+                className={`flex-1 py-2.5 rounded-xl font-bold transition-all ${
                   testamentTab === 'new'
                     ? 'bg-gradient-to-r from-sky-500 to-blue-500 text-white'
                     : 'bg-white/10 text-white/60 hover:bg-white/20'
                 }`}
               >
-                ✝️ 신약성경 <span className="text-sm opacity-80">(27권)</span>
+                ✝️ 신약성경 <span className="text-xs opacity-80">(27권)</span>
               </button>
             </div>
 
-            {/* 성경 목록 */}
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+            <div className="grid grid-cols-5 sm:grid-cols-7 md:grid-cols-9 gap-1.5">
               {(testamentTab === 'old' ? oldTestament : newTestament).map((book) => (
                 <button
                   key={book.name}
                   onClick={() => handleBookSelect(book)}
-                  className={`p-2 border rounded-xl text-white text-xs font-medium transition-all hover:scale-105 ${
+                  className={`p-1.5 border rounded-lg text-white text-[11px] font-medium transition-all hover:scale-105 ${
                     testamentTab === 'old'
-                      ? 'bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/30 hover:border-amber-400'
-                      : 'bg-sky-500/10 border-sky-500/30 hover:bg-sky-500/30 hover:border-sky-400'
+                      ? 'bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/30'
+                      : 'bg-sky-500/10 border-sky-500/30 hover:bg-sky-500/30'
                   }`}
                 >
                   {book.name}
@@ -508,17 +736,17 @@ ${editInstruction}
 
         {/* Step 2: 장 선택 */}
         {step === 2 && selectedBook && (
-          <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl p-6 border border-white/20">
-            <button onClick={() => setStep(1)} className="text-purple-300 hover:text-white text-sm mb-4">
+          <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl p-5 border border-white/20">
+            <button onClick={() => setStep(1)} className="text-purple-300 hover:text-white text-xs mb-3">
               ← 성경 다시 선택
             </button>
-            <h2 className="text-2xl font-black text-white mb-6">📖 {selectedBook.name} - 장 선택</h2>
-            <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 gap-2">
+            <h2 className="text-xl font-black text-white mb-4">📖 {selectedBook.name} - 장 선택</h2>
+            <div className="grid grid-cols-10 sm:grid-cols-12 md:grid-cols-15 gap-1.5">
               {Array.from({ length: selectedBook.chapters }, (_, i) => i + 1).map((chapter) => (
                 <button
                   key={chapter}
                   onClick={() => handleChapterSelect(chapter)}
-                  className="p-3 bg-white/5 hover:bg-white/20 border border-white/10 hover:border-purple-400 rounded-xl text-white font-bold transition-all hover:scale-110"
+                  className="p-2 bg-white/5 hover:bg-white/20 border border-white/10 hover:border-purple-400 rounded-lg text-white text-sm font-bold transition-all hover:scale-110"
                 >
                   {chapter}
                 </button>
@@ -529,36 +757,36 @@ ${editInstruction}
 
         {/* Step 3: 대본 생성 */}
         {step === 3 && (
-          <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl p-6 border border-white/20">
-            <button onClick={() => setStep(2)} className="text-purple-300 hover:text-white text-sm mb-4">
+          <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl p-5 border border-white/20">
+            <button onClick={() => setStep(2)} className="text-purple-300 hover:text-white text-xs mb-3">
               ← 장 다시 선택
             </button>
 
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center text-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center text-xl">
                 ✍️
               </div>
               <div>
-                <h2 className="text-2xl font-black text-white">{selectedBook.name} {selectedChapter}장</h2>
-                <p className="text-purple-300">QT 대본 생성</p>
+                <h2 className="text-xl font-black text-white">{selectedBook.name} {selectedChapter}장</h2>
+                <p className="text-purple-300 text-sm">QT 대본 생성</p>
               </div>
             </div>
 
-            {!script && !loading && (
+            {!scriptGenerated && !loading && (
               <div>
-                <div className="mb-4">
+                <div className="mb-3">
                   <label className="block text-sm font-bold text-white mb-2">📝 추가 참고 자료 (선택)</label>
                   <textarea
                     value={additionalNotes}
                     onChange={(e) => setAdditionalNotes(e.target.value)}
-                    rows="3"
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40"
+                    rows="2"
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm placeholder-white/40"
                     placeholder="추가로 참고할 내용..."
                   />
                 </div>
                 <button
                   onClick={generateScript}
-                  className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-black text-lg"
+                  className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-black"
                 >
                   📖 대본 생성하기
                 </button>
@@ -566,25 +794,40 @@ ${editInstruction}
             )}
 
             {loading && (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-4 relative">
+              <div className="text-center py-10">
+                <div className="w-14 h-14 mx-auto mb-3 relative">
                   <div className="absolute inset-0 bg-purple-500 rounded-full animate-ping opacity-30"></div>
-                  <div className="absolute inset-0 flex items-center justify-center text-3xl">⏳</div>
+                  <div className="absolute inset-0 flex items-center justify-center text-2xl">⏳</div>
                 </div>
-                <p className="text-white text-lg font-bold">{loadingMessage}</p>
+                <p className="text-white font-bold">{loadingMessage}</p>
               </div>
             )}
 
-            {script && !loading && (
+            {scriptGenerated && !loading && (
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-bold text-white">🎤 생성된 대본</h3>
-                  <div className="flex gap-2">
+                <div className="bg-blue-500/20 border border-blue-500/40 rounded-xl p-3 mb-3">
+                  <p className="text-blue-300 font-bold text-sm mb-1">📋 ElevenLabs 작업 순서</p>
+                  <ol className="text-blue-200 text-xs space-y-0.5">
+                    <li>1. 대본 복사 → ElevenLabs 음성 생성</li>
+                    <li>2. 수정된 최종 대본 붙여넣기</li>
+                    <li>3. 대본 확정</li>
+                  </ol>
+                </div>
+
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-bold text-white">🎤 대본 (수정 가능)</h3>
+                  <div className="flex gap-1">
                     <button
                       onClick={() => copyToClipboard(script, 'script')}
-                      className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-bold"
+                      className="px-3 py-1 bg-emerald-500 text-white rounded-lg text-xs font-bold"
                     >
-                      {copied === 'script' ? '✓ 복사됨!' : '📋 복사'}
+                      {copied === 'script' ? '✓' : '복사'}
+                    </button>
+                    <button
+                      onClick={() => downloadText(script, `${selectedBook.name}_${selectedChapter}장_대본.txt`)}
+                      className="px-2 py-1 bg-white/10 text-white rounded-lg text-xs"
+                    >
+                      💾
                     </button>
                   </div>
                 </div>
@@ -592,55 +835,92 @@ ${editInstruction}
                 <textarea
                   value={script}
                   onChange={(e) => setScript(e.target.value)}
-                  className="w-full h-80 px-4 py-3 rounded-xl text-sm leading-relaxed bg-white text-gray-900 border-2 border-emerald-500"
+                  className="w-full h-64 px-3 py-2 rounded-xl text-sm leading-relaxed bg-white text-gray-900 border-2 border-emerald-500"
                 />
 
                 <button
                   onClick={confirmScript}
-                  className="w-full mt-4 py-4 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white rounded-xl font-black text-lg"
+                  className="w-full mt-3 py-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white rounded-xl font-black"
                 >
-                  ✅ 대본 확정 → 이미지 프롬프트 생성
+                  ✅ 대본 확정 → 이미지 프롬프트
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* Step 4: 대본 + 이미지 프롬프트 (좌우 분할) */}
+        {/* Step 4: 대본 + 이미지 프롬프트 */}
         {step === 4 && (
-          <div className="flex gap-4 h-[calc(100vh-120px)]">
+          <div className="flex gap-3 h-[calc(100vh-100px)]">
             {/* 왼쪽: 대본 */}
-            <div className="w-1/2 bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl p-4 border border-white/20 flex flex-col">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-bold text-white">📄 대본</h3>
+            <div className="w-1/2 bg-white/10 backdrop-blur-md rounded-xl shadow-2xl p-3 border border-white/20 flex flex-col">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-bold text-white">📄 대본</h3>
                 <button onClick={() => setStep(3)} className="text-purple-300 text-xs">← 수정</button>
               </div>
               
-              <div className="flex-1 overflow-y-auto bg-white/5 rounded-xl p-4">
-                <div className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">
+              {/* 선택된 텍스트 표시 */}
+              {selectedText && deletedNumbers.length > 0 && (
+                <div className="bg-amber-500/20 border border-amber-500/50 rounded-lg p-2 mb-2">
+                  <p className="text-amber-300 text-xs font-bold mb-1">✨ 선택된 텍스트:</p>
+                  <p className="text-white text-xs line-clamp-2">{selectedText}</p>
+                  <div className="flex gap-1 mt-2 flex-wrap">
+                    {deletedNumbers.map(num => (
+                      <button
+                        key={num}
+                        onClick={() => generateNewPrompt(num)}
+                        disabled={editLoading}
+                        className="px-2 py-1 bg-amber-500 text-white rounded text-xs font-bold"
+                      >
+                        #{num}에 추가
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              <div 
+                ref={scriptRef}
+                className="flex-1 overflow-y-auto bg-white/5 rounded-lg p-3"
+                onMouseUp={handleTextSelection}
+              >
+                <div className="text-white/90 text-xs leading-relaxed whitespace-pre-wrap">
                   {imagePrompts.length > 0 ? (
-                    // 하이라이트된 대본
-                    <HighlightedScript script={script} prompts={imagePrompts} />
+                    <HighlightedScript 
+                      script={script} 
+                      prompts={imagePrompts} 
+                      onDeletePrompt={deletePrompt}
+                    />
                   ) : (
                     script
                   )}
                 </div>
               </div>
+              
+              {deletedNumbers.length > 0 && (
+                <div className="mt-2 p-2 bg-red-500/20 rounded-lg">
+                  <p className="text-red-300 text-xs">
+                    🗑️ 삭제된 번호: {deletedNumbers.map(n => `#${n}`).join(', ')}
+                    <br />
+                    <span className="text-red-200">대본에서 텍스트를 드래그하여 새 프롬프트를 추가하세요</span>
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* 오른쪽: 이미지 프롬프트 */}
-            <div className="w-1/2 bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl p-4 border border-white/20 flex flex-col">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-bold text-white">🎨 이미지 프롬프트</h3>
+            <div className="w-1/2 bg-white/10 backdrop-blur-md rounded-xl shadow-2xl p-3 border border-white/20 flex flex-col">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-bold text-white">🎨 이미지 프롬프트 ({imagePrompts.length}/20)</h3>
                 {imagePrompts.length > 0 && (
                   <button
                     onClick={() => copyToClipboard(
                       imagePrompts.map(p => `#${p.number}: ${p.prompt}`).join('\n\n'),
                       'all'
                     )}
-                    className="px-3 py-1 bg-pink-500 text-white rounded-lg text-xs font-bold"
+                    className="px-2 py-1 bg-pink-500 text-white rounded-lg text-xs font-bold"
                   >
-                    {copied === 'all' ? '✓' : '📋 전체 복사'}
+                    {copied === 'all' ? '✓' : '전체 복사'}
                   </button>
                 )}
               </div>
@@ -649,7 +929,7 @@ ${editInstruction}
                 <div className="flex-1 flex items-center justify-center">
                   <button
                     onClick={generateImagePrompts}
-                    className="px-8 py-4 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-xl font-black text-lg"
+                    className="px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-xl font-black"
                   >
                     🎨 이미지 프롬프트 생성
                   </button>
@@ -659,42 +939,156 @@ ${editInstruction}
               {loading && (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
-                    <div className="w-12 h-12 mx-auto mb-3 relative">
+                    <div className="w-10 h-10 mx-auto mb-2 relative">
                       <div className="absolute inset-0 bg-pink-500 rounded-full animate-ping opacity-30"></div>
-                      <div className="absolute inset-0 flex items-center justify-center text-2xl">🎨</div>
+                      <div className="absolute inset-0 flex items-center justify-center text-xl">🎨</div>
                     </div>
-                    <p className="text-white font-bold">{loadingMessage}</p>
+                    <p className="text-white text-sm font-bold">{loadingMessage}</p>
                   </div>
                 </div>
               )}
 
               {imagePrompts.length > 0 && !loading && (
-                <div className="flex-1 overflow-y-auto space-y-2 pr-2">
-                  {imagePrompts.map((p, idx) => (
-                    <div 
-                      key={idx}
-                      onClick={() => setSelectedPrompt(idx)}
-                      className="bg-white/5 border border-white/10 rounded-xl p-3 cursor-pointer hover:border-pink-500/50 hover:bg-white/10 transition-all group"
-                    >
-                      <div className="flex items-start gap-2">
-                        <span className="shrink-0 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs font-black px-2 py-1 rounded">
-                          #{p.number}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white/80 text-xs leading-relaxed line-clamp-2">{p.prompt}</p>
-                          {p.scriptRef && (
-                            <p className="text-pink-300/60 text-[10px] mt-1 truncate">
-                              📍 {p.scriptRef.substring(0, 50)}...
-                            </p>
-                          )}
+                <>
+                  <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+                    {imagePrompts.map((p, idx) => (
+                      <div 
+                        key={idx}
+                        onClick={() => setSelectedPrompt(idx)}
+                        className="bg-white/5 border border-white/10 rounded-lg p-2 cursor-pointer hover:border-pink-500/50 hover:bg-white/10 transition-all group"
+                      >
+                        <div className="flex items-start gap-2">
+                          <span className="shrink-0 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded">
+                            #{p.number}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white/80 text-[10px] leading-relaxed line-clamp-2">{p.prompt}</p>
+                          </div>
+                          <span className="text-white/40 text-[10px] group-hover:text-white">→</span>
                         </div>
-                        <span className="text-white/40 text-xs group-hover:text-white">클릭 →</span>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                  
+                  {/* 확정 버튼 */}
+                  <button
+                    onClick={confirmImagePrompts}
+                    disabled={deletedNumbers.length > 0}
+                    className="mt-2 w-full py-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 disabled:from-gray-500 disabled:to-gray-600 text-white rounded-xl font-black text-sm"
+                  >
+                    {deletedNumbers.length > 0 
+                      ? `⚠️ ${deletedNumbers.length}개 프롬프트 누락` 
+                      : '✅ 프롬프트 확정 → 유튜브 업로드 정보'}
+                  </button>
+                </>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Step 5: 유튜브 업로드 정보 */}
+        {step === 5 && (
+          <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl p-5 border border-white/20">
+            <button onClick={() => setStep(4)} className="text-purple-300 hover:text-white text-xs mb-3">
+              ← 이미지 프롬프트로 돌아가기
+            </button>
+
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center text-xl">
+                ▶️
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-white">유튜브 업로드 정보</h2>
+                <p className="text-purple-300 text-sm">{selectedBook.name} {selectedChapter}장</p>
+              </div>
+            </div>
+
+            {loading && (
+              <div className="text-center py-10">
+                <div className="w-14 h-14 mx-auto mb-3 relative">
+                  <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-30"></div>
+                  <div className="absolute inset-0 flex items-center justify-center text-2xl">▶️</div>
+                </div>
+                <p className="text-white font-bold">{loadingMessage}</p>
+              </div>
+            )}
+
+            {!loading && !youtubeData && (
+              <div>
+                <h3 className="text-lg font-bold text-white mb-3">🎬 제목 선택</h3>
+                <div className="space-y-2">
+                  {youtubeTitles.map((title, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => selectTitle(title)}
+                      className="w-full p-3 bg-white/5 hover:bg-white/15 border border-white/20 hover:border-red-500/50 rounded-xl text-left transition-all"
+                    >
+                      <span className="text-red-400 font-bold mr-2">{idx + 1}.</span>
+                      <span className="text-white">{title}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {youtubeData && (
+              <div className="space-y-4">
+                {/* 제목 */}
+                <div className="bg-white/5 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-bold text-red-400">📌 제목</h4>
+                    <button
+                      onClick={() => copyToClipboard(youtubeData.title, 'yt-title')}
+                      className="px-2 py-1 bg-red-500 text-white rounded text-xs font-bold"
+                    >
+                      {copied === 'yt-title' ? '✓' : '복사'}
+                    </button>
+                  </div>
+                  <p className="text-white text-sm">{youtubeData.title}</p>
+                </div>
+
+                {/* 설명 */}
+                <div className="bg-white/5 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-bold text-red-400">📝 설명</h4>
+                    <button
+                      onClick={() => copyToClipboard(youtubeData.description, 'yt-desc')}
+                      className="px-2 py-1 bg-red-500 text-white rounded text-xs font-bold"
+                    >
+                      {copied === 'yt-desc' ? '✓' : '복사'}
+                    </button>
+                  </div>
+                  <pre className="text-white/80 text-xs whitespace-pre-wrap leading-relaxed">{youtubeData.description}</pre>
+                </div>
+
+                {/* 태그 */}
+                <div className="bg-white/5 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-bold text-red-400">🏷️ 태그 (쉼표 구분)</h4>
+                    <button
+                      onClick={() => copyToClipboard(youtubeData.tags, 'yt-tags')}
+                      className="px-2 py-1 bg-red-500 text-white rounded text-xs font-bold"
+                    >
+                      {copied === 'yt-tags' ? '✓' : '복사'}
+                    </button>
+                  </div>
+                  <p className="text-white/80 text-xs">{youtubeData.tags}</p>
+                </div>
+
+                {/* 완료 */}
+                <div className="bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/50 rounded-xl p-4 text-center">
+                  <p className="text-emerald-300 text-lg font-black mb-2">🎉 모든 작업 완료!</p>
+                  <p className="text-emerald-200 text-sm">유튜브에 업로드할 준비가 되었습니다.</p>
+                </div>
+
+                <button
+                  onClick={resetAll}
+                  className="w-full py-3 bg-slate-600 hover:bg-slate-500 text-white rounded-xl font-bold"
+                >
+                  🔄 새로운 QT 시작하기
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -709,10 +1103,9 @@ ${editInstruction}
             className="bg-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6">
-              {/* 헤더 */}
+            <div className="p-5">
               <div className="flex items-center justify-between mb-4">
-                <span className="bg-gradient-to-r from-pink-500 to-rose-500 text-white font-black px-4 py-2 rounded-xl text-lg">
+                <span className="bg-gradient-to-r from-pink-500 to-rose-500 text-white font-black px-4 py-2 rounded-xl">
                   #{imagePrompts[selectedPrompt].number}
                 </span>
                 <button 
@@ -723,16 +1116,14 @@ ${editInstruction}
                 </button>
               </div>
 
-              {/* 대본 위치 */}
               {imagePrompts[selectedPrompt].scriptRef && (
-                <div className="bg-purple-500/20 border border-purple-500/30 rounded-xl p-4 mb-4">
+                <div className="bg-purple-500/20 border border-purple-500/30 rounded-xl p-3 mb-3">
                   <p className="text-purple-300 text-xs font-bold mb-1">📍 대본 위치</p>
                   <p className="text-white text-sm">{imagePrompts[selectedPrompt].scriptRef}</p>
                 </div>
               )}
 
-              {/* 영문 프롬프트 */}
-              <div className="bg-white/5 rounded-xl p-4 mb-4">
+              <div className="bg-white/5 rounded-xl p-3 mb-3">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-white/60 text-xs font-bold">🇺🇸 영문 프롬프트</p>
                   <button
@@ -745,48 +1136,40 @@ ${editInstruction}
                 <p className="text-white text-sm leading-relaxed">{imagePrompts[selectedPrompt].prompt}</p>
               </div>
 
-              {/* 한글 설명 */}
-              <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-xl p-4 mb-4">
+              <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-xl p-3 mb-3">
                 <p className="text-emerald-300 text-xs font-bold mb-1">🇰🇷 한글 설명</p>
-                <p className="text-white text-sm">{imagePrompts[selectedPrompt].koreanDesc || '(한글 설명 없음)'}</p>
+                <p className="text-white text-sm">{imagePrompts[selectedPrompt].koreanDesc || '(없음)'}</p>
               </div>
 
-              {/* 수정 요청 */}
-              <div className="bg-amber-500/20 border border-amber-500/30 rounded-xl p-4">
-                <p className="text-amber-300 text-xs font-bold mb-2">✏️ 프롬프트 수정 요청</p>
+              <div className="bg-amber-500/20 border border-amber-500/30 rounded-xl p-3">
+                <p className="text-amber-300 text-xs font-bold mb-2">✏️ 프롬프트 수정</p>
                 <textarea
                   value={editInstruction}
                   onChange={(e) => setEditInstruction(e.target.value)}
-                  rows="3"
+                  rows="2"
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-white/40"
-                  placeholder="수정하고 싶은 내용을 입력하세요... (예: 색상을 더 따뜻하게, 인물을 추가해줘)"
+                  placeholder="수정 요청..."
                 />
                 <button
                   onClick={() => regeneratePrompt(selectedPrompt)}
                   disabled={editLoading || !editInstruction.trim()}
-                  className="w-full mt-2 py-2 bg-amber-500 hover:bg-amber-400 disabled:bg-white/10 text-white rounded-lg font-bold text-sm"
+                  className="w-full mt-2 py-2 bg-amber-500 disabled:bg-white/10 text-white rounded-lg font-bold text-sm"
                 >
-                  {editLoading ? '수정 중...' : '🔄 프롬프트 수정하기'}
+                  {editLoading ? '수정 중...' : '🔄 수정하기'}
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-
-      {/* Footer */}
-      <div className="text-center py-2 text-purple-300/50 text-xs">
-        📖 하루 딱! 한 장 · Powered by Claude AI
-      </div>
     </div>
   );
 }
 
 // 하이라이트된 대본 컴포넌트
-function HighlightedScript({ script, prompts }) {
+function HighlightedScript({ script, prompts, onDeletePrompt }) {
   const [hoveredNum, setHoveredNum] = useState(null);
   
-  // 대본에서 각 프롬프트의 참조 위치 찾기
   const getMarkedScript = () => {
     const parts = [];
     let lastIndex = 0;
@@ -794,7 +1177,6 @@ function HighlightedScript({ script, prompts }) {
     
     prompts.forEach((p) => {
       if (p.scriptRef && p.scriptRef.length > 5) {
-        // 핵심 키워드 추출 (앞 20자)
         const searchText = p.scriptRef.substring(0, Math.min(25, p.scriptRef.length));
         const index = script.indexOf(searchText);
         if (index !== -1) {
@@ -807,10 +1189,8 @@ function HighlightedScript({ script, prompts }) {
       }
     });
     
-    // 위치순 정렬
     markers.sort((a, b) => a.start - b.start);
     
-    // 겹치는 마커 제거
     const cleanMarkers = [];
     markers.forEach(m => {
       const last = cleanMarkers[cleanMarkers.length - 1];
@@ -819,8 +1199,7 @@ function HighlightedScript({ script, prompts }) {
       }
     });
     
-    // 파트 생성
-    cleanMarkers.forEach((marker, idx) => {
+    cleanMarkers.forEach((marker) => {
       if (marker.start > lastIndex) {
         parts.push({ type: 'text', content: script.substring(lastIndex, marker.start) });
       }
@@ -847,12 +1226,21 @@ function HighlightedScript({ script, prompts }) {
         part.type === 'highlight' ? (
           <span 
             key={idx}
-            className="relative inline bg-pink-500/30 border-b-2 border-pink-400 px-0.5 rounded cursor-pointer hover:bg-pink-500/50"
+            className="relative inline bg-pink-500/30 border-b-2 border-pink-400 px-0.5 rounded cursor-pointer hover:bg-pink-500/50 group"
             onMouseEnter={() => setHoveredNum(part.number)}
             onMouseLeave={() => setHoveredNum(null)}
           >
-            <span className="absolute -top-5 left-0 bg-pink-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-              #{part.number}
+            <span 
+              className="absolute -top-5 left-0 bg-pink-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded cursor-pointer hover:bg-red-500 z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.confirm(`#${part.number} 프롬프트를 삭제하시겠습니까?`)) {
+                  onDeletePrompt(part.number);
+                }
+              }}
+              title="클릭하여 삭제"
+            >
+              #{part.number} ✕
             </span>
             {part.content}
           </span>
